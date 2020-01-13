@@ -1,0 +1,806 @@
+Testing of the command shell.
+I finished step 1, 2, 3 for the project, so I put a thorough test for step 1, 2, 3 in this test file.
+
+
+Step 1: Read a command name and run it
+--------------------------------------
+1.1 Shell openning test:
+(testcase 1)
+To open the shell I build, you would use the command: 
+instruction:
+./ffosh
+or
+valgrind ./ffosh
+
+output:
+ffosh:/home/xy93/ece551/mp_miniproject $ 
+
+explanation:
+This is correct. The shell print out a prompt and wait for command.
+
+
+1.2 Shell exiting test:
+(testcase 2)
+instruction:
+Control + D
+
+output:
+Exit shell
+
+explanation:
+This is correct. The shell exit because of EOF.
+
+(testcase 3)
+instruction:
+exit
+
+output:
+Exit shell
+
+explanation:
+This is correct. The shell exit because it sees exit.
+
+
+1.3 No command test:
+(testcase 4)
+instruction:
+empty
+
+output:
+ffosh:/home/xy93/ece551/mp_miniproject $ 
+
+explanation:
+This is correct. The shell print out a new prompt and continue waiting for command.
+
+
+1.4 Program Exiting test: SUCCESS CASE TEST, FAIL CASE TEST, SIGNAL CASE TEST
+(testcase 5) SUCCESS CASE TEST
+instruction:
+/bin/grep mini-project README 
+
+output:
+Your final programming assignment is the "mini-project."
+NOT do more than one of them). Each mini-project option has
+  This mini-project is due at 11:59:59 pm eastern time on Sunday, December 8, 2019
+Your mini-project options are:
+Program was successful
+
+explanation:
+This is correct. The shell first conduct grep to find all line contains "mini-project" from README, and then exit the grep program with "Program was successful".
+
+(testcase 6) FAIL CASE TEST
+instruction:
+/bin/grep
+
+output:
+Usage: grep [OPTION]... PATTERN [FILE]...
+Try 'grep --help' for more information.
+Program failed with code 2
+
+explanation:
+This is correct. We didn't provide input for grep, so it exit the grep program with "Program failed with code 2".
+
+(testcase 7) FAIL CASE TEST
+instruction:
+/usr/bin/gcc
+
+output:
+gcc: fatal error: no input files
+compilation terminated.
+Program failed with code 1
+
+explanation:
+This is correct. We didn't provide input file for gcc, and it exit the grep program with "Program failed with code 1".
+
+(testcase 8) SIGNAL CASE TEST
+instruction:
+./divByZero
+
+output:
+Terminated by signal 8
+
+explanation:
+This is correct. We built a divide-by-zero program, and run it with our own shell, it exit the program with "Terminated by signal 8", which is the signal for floating point exception.
+
+
+Step 2: Improving commands
+--------------------------
+2.1 Path name without a forward slash test (find from ECE551PATH environment): SUCESS CASE TEST, FAIL CASE TEST
+
+2.1.1 Built-in command from ECE551PATH test: SUCESS CASE TEST, FAIL CASE TEST
+(testcase 9) SUCESS CASE TEST
+instruction:
+ls
+
+output:
+argvManager.cpp  changeDir.cpp	cmdParser.cpp  commandShell.txt  divByZero.cpp	envVar.h  ffosh.cpp  Makefile	   README  testECE551PATH.txt
+argvManager.h	 changeDir.h	cmdParser.h    divByZero	 envVar.cpp	ffosh	  ffosh.h    numerics.txt  test    TESTING.txt
+Program was successful
+
+explanation:
+This is correct. "ls" is originally at "/bin/ls", and we called it with "/bin" from ECE551PATH. We got a list of file, and exit ls with "Program was successful".
+
+(testcase 10) SUCESS CASE TEST
+instruction:
+echo 551 is a great course
+
+output:
+551 is a great course
+Program was successful
+
+explanation:
+This is correct. "echo" is originally at "/bin/echo", and we called it with "/bin" from ECE551PATH. We got the echo back, and exit echo with "Program was successful". A more thorough test for white spaces will be in the "2.4 Command with arguement test" section.
+
+(testcase 11)
+instruction:
+env
+
+output:
+Other environment variable above
+...
+ECE551PATH=/usr/local/esbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
+Program was successful
+
+explanation:
+This is correct. "env" is originally at "/bin/env", and we called it with "/bin" from ECE551PATH. We got all our environmental variable back. We can see that we have a list of ECE551PATH, and we exit env with "Program was successful". 
+
+(testcase 12) FAIL CASE TEST
+instruction:
+magic
+
+output:
+Command magic not found
+Program failed with code 1
+
+explanation:
+This is correct. We input a command "magic", which cannot be found by adding any path from ECE551PATH, so it output "Command magic not found", and exits with "Program failed with code 1".
+
+2.1.2 Other path in ECE551PATH test:
+(testcase 13)
+instruction:
+status
+
+output:
+No gradings in progress
+===========================================
+Assignments that are due in the near future
+ (but you have not yet passed) 
+============================================
+mp_miniproject Due: Sun Dec  8 23:59:59 2019
+ **HARD DEADLINE**
+   -> requires 1
+Program was successful
+
+explanation:
+This is correct. Since "status" command is already at "/usr/local/bin/status", and we call it with environment "/usr/local/bin/" from ECE551PATH. We got the status of deadlines back (no other homework left except mp! Hooray!), and exit status with "Program was successful". 
+
+2.2 Path name with a forward slash test: RELATIVE ADDRESS CASE TEST, ABSOLUTE ADDRESS CASE TEST
+(testcase 14) RELATIVE ADDRESS CASE TEST
+instruction:
+ls ../..
+
+output:
+ece551
+Program was successful
+
+explanation:
+This is correct. Since our shell first find the upper and upper directory based on the relative "../..", which is the xy93 directory , then list the only file "ece551" in it, then exit this command and get a "Program was successful".
+
+(testcase 15) RELATIVE ADDRESS CASE TEST
+instruction:
+./ffosh
+Control + D or exit
+
+output:
+Program was successful
+
+explanation:
+This is correct. Since our shell first find the ffosh based on the relative ./ and open another ffosh in our ffosh, then we exit this inner ffosh and get a "Program was successful". (If we then do another exit will get us out of the outer ffosh shell.)
+
+(testcase 16) ABSOLUTE ADDRESS CASE TEST
+instruction:
+ls /home/xy93
+
+output:
+ece551
+Program was successful
+
+explanation:
+This is correct. Since our shell first find the instruction at that absolute path, and then execute the ls command to list the only one file "ece551", then exit with "Program was successful".
+
+(testcase 17) ABSOLUTE ADDRESS CASE TEST
+instruction:
+/bin/pwd
+
+output:
+/home/xy93/ece551/mp_miniproject
+Program was successful
+
+explanation:
+This is correct. Since our shell first find the instruction at that absolute path, and then execute the pwd command to print the current directory, then exit with "Program was successful".
+
+2.3 Command with arguement test
+2.3.1 With only one white space each
+(testcase 18)
+instruction:
+ls -a
+
+output:
+.   argvManager.cpp  changeDir.cpp  cmdParser.cpp  commandShell.txt  divByZero.cpp  envVar.h  ffosh.cpp  .honor    numerics.txt  test		     TESTING.txt
+..  argvManager.h    changeDir.h    cmdParser.h    divByZero	     envVar.cpp     ffosh     ffosh.h	 Makefile  README	 testECE551PATH.txt
+Program was successful
+
+explanation:
+This is correct. The parser successfully split ls and -a, and list all files in the directory.
+
+2.3.2 With muliple white spaces each
+(testcase 19)
+instruction:
+              pwd
+
+output:
+/home/xy93/ece551/mp_miniproject
+Program was successful
+
+explanation:
+This is correct. The shell runs pwd as normal command.
+
+(testcase 20)
+instruction:
+ls            -a
+
+output:
+.   argvManager.cpp  changeDir.cpp  cmdParser.cpp  commandShell.txt  divByZero.cpp  envVar.h  ffosh.cpp  .honor    numerics.txt  test		     TESTING.txt
+..  argvManager.h    changeDir.h    cmdParser.h    divByZero	     envVar.cpp     ffosh     ffosh.h	 Makefile  README	 testECE551PATH.txt
+Program was successful
+
+explanation:
+This is correct. The shell runs ls -a as normal command.
+
+(testcase 21)
+instruction:
+echo         a               b     23
+
+output:
+a b 23
+Program was successful
+
+explanation:
+This is correct. The shell split them into three words and echo them.
+
+2.4.3 With literal whitepsace
+(testcase 22)
+instruction:
+echo a    b       c       "def   ghi"
+
+output:
+(To see how it works, we also print it by lines first:
+echo
+a
+b
+c
+def   ghi
+)
+
+The true execute result:
+a b c def   ghi
+Program was successful
+
+explanation:
+This is correct. We can see that all words not in quotes are parsed and reorganized in echo with only one white space, while "def   ghi" still maintain its white space in the quotes.
+
+(testcase 23)
+instruction:
+echo "a       b"   c       "def   ghi"
+
+output:
+(To see how it works, we also print it by lines first:
+echo
+a       b
+c
+def   ghi
+)
+
+The true execute result:
+a       b c def   ghi
+Program was successful
+
+explanation:
+This is correct. This time we also quote "a       b", and we can see they are parsed without eliminating the white space.
+
+2.4.4 With escaped quotation marks and backslashes
+(testcase 24)
+instruction:
+echo \"hello   world\"    "a\\b\\c    d\\"
+
+output:
+(To see how it works, we also print it by lines first:
+echo
+hello   world
+a\b\c    d
+)
+
+The true execute result:
+hello   world a\b\c    d def   ghi
+Program was successful
+
+explanation:
+This is correct. Our parser first escape all \" and \\, then keep all original white spaces within the quotes, then keep only one white space outside the quotes.
+
+(testcase 25)
+instruction:
+echo \"hello   world\"  outsider  "a\\b\\c    d\\"
+
+output:
+(To see how it works, we also print it by lines first:
+echo
+hello   world
+outsider
+a\b\c    d
+)
+
+The true execute result:
+hello   world outsider a\b\c    d
+Program was successful
+
+explanation:
+This is correct. Our parser first escape all \" and \\, then keep all original white spaces within the quotes, then keep only one white space outside the quotes (for outsider in this case).
+
+(testcase 26)
+instruction:
+echo \"\\bla       bla\"
+
+output:
+(To see how it works, we also print it by lines first:
+echo
+\bla       bla
+)
+
+The true execute result:
+\bla       bla outsider a\b\c    d
+Program was successful
+
+explanation:
+This is correct. The same reason as above
+
+(testcase 27)
+instruction:
+echo \"\\     \\
+
+output:
+One of the quotes is open
+Program failed with code 1
+
+explanation:
+This is correct. Since after escaping, we still have just one quote.
+
+2.4.5 With unclosed quotation mark at the end
+(testcase 28)
+instruction:
+echo "ab""c   
+
+output:
+One of the quotes is open
+Program failed with code 1
+
+explanation:
+This is correct. We have an unclosed quote, which is treated as an error.
+
+(testcase 29)
+instruction:
+echo "jkl
+
+output:
+One of the quotes is open
+Program failed with code 1
+
+explanation:
+This is correct. We have an unclosed quote, which is treated as an error.
+
+(testcase 30)
+instruction:
+echo abdddv"   
+
+output:
+One of the quotes is open
+Program failed with code 1
+
+explanation:
+This is correct. We have an unclosed quote, which is treated as an error.
+
+(testcase 31)
+instruction:
+echo "ab"d"d"d"v" "  
+
+output:
+One of the quotes is open
+Program failed with code 1
+
+explanation:
+This is correct. We have 7 quotes, so an unclosed quote, which is treated as an error.
+
+
+Step 3: Directories and variables
+---------------------------------
+3.1 The cd command test
+(testcase 32)
+instruction:
+cd
+
+output:
+We need an input for the cd command
+
+explanation:
+This is correct. Since we choose to return this error when user typed in nothing. Depending on our choice, we can also cd ourself back into the home directory. Both choices are applicable.
+
+(testcase 33)
+instruction:
+cd .
+
+output:
+ffosh:/home/xy93/ece551/mp_miniproject $
+
+explanation:
+This is correct. We cd to current directory, so it stays the same.
+
+(testcase 34)
+instruction:
+cd ..
+
+output:
+ffosh:/home/xy93/ece551 $
+
+explanation:
+This is correct. We cd to the parent directory, so it cd up one level. 
+
+(testcase 35)
+instruction:
+cd mp_miniproject
+
+output:
+ffosh:/home/xy93/ece551/mp_miniproject $
+
+explanation:
+This is correct. We check for changing to relative address, and it works.
+
+(testcase 36)
+instruction:
+cd ./.././..
+
+output:
+ffosh:/home/xy93 $
+
+explanation:
+This is correct. We did two cd to current and two cd to parent, and it works.
+
+(testcase 37)
+instruction:
+cd /usr/local
+
+output:
+ffosh:/usr/local $
+
+explanation:
+This is correct. We check for changing to absolute address, and it works.
+
+(testcase 38)
+instruction:
+cd nowhere
+
+output:
+-bash: No such file or directory
+
+explanation:
+This is correct. We cd to an unknown address, and it print "-bash: No such file or directory".
+
+
+3.2 Current directory prompt test
+(testcase 39)
+instruction:
+cd /home/xy93/ece551/
+pwd
+
+output:
+ffosh:/home/xy93/ece551
+/home/xy93/ece551
+Program was successful
+
+explanation:
+This is correct. We check if the prompt shows the correct current directory we are now in.
+
+3.3 Access to variables test (more special input in 3.3.5)
+3.3.1 Get variable value with its name 
+(testcase 40)
+instruction:
+echo $ECE551PATH
+
+output:
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games
+Program was successful
+
+explanation:
+This is correct. We successfully retrieve the value of $ECE551PATH
+
+3.3.2 Set variable value
+(testcase 41)
+instruction:
+set
+
+output:
+Need two arguement
+input not valid
+
+explanation:
+This is correct. We didn't provide a variable name and value.
+
+(testcase 42)
+instruction:
+set var
+
+output:
+Need a second arguement
+input not valid
+
+explanation:
+This is correct. We didn't provide a variable value.
+
+(testcase 43)
+instruction:
+set var 551
+echo $var
+
+output:
+551
+Program was successful
+
+explanation:
+This is correct. We set and retrieve the value of var.
+
+(testcase 44)
+instruction:
+set var 551 552 
+
+output:
+Too many arguements
+input not valid
+
+explanation:
+This is correct. We input too many arguements to set function.
+
+(testcase 45)
+instruction:
+set var 551
+echo $var
+env
+
+output:
+a lot of words
+551
+
+Some environment variable but no "var" in it.
+
+explanation:
+This is correct. Since we have not export "var", it should not be in the environment variables.
+
+(testcase 46)
+instruction:
+set var 551
+set var not551
+echo $var
+
+output:
+not551
+Program was successful
+
+explanation:
+This is correct. Our var can overwrite the previous set values.
+
+(testcase 47)
+instruction:
+set v 551
+set w $v
+echo $w
+
+output:
+551
+Program was successful
+
+explanation:
+This is correct. We set variable with another variable's value.
+
+(testcase 48)
+instruction:
+set v 551
+set w 651
+set x 751
+echo $v $w $x
+echo $v       $w     $x
+
+output:
+551 651 751
+Program was successful
+551 651 751
+Program was successful
+
+explanation:
+This is correct. Since for the echo, it shows 551 651 751 correctly, even with any whitespace inside.
+
+(testcase 49)
+instruction:
+echo $vwx
+
+output:
+551wx
+Program was successful
+
+explanation:
+This is correct. Since for the echo, we have only use one dollar sign, so it does "$v" + wx = 551wx, which is correct.
+
+(testcase 50)
+instruction:
+echo $wMiddle-/+-*$v
+
+output:
+651Middle-/+-*551
+Program was successful
+
+explanation:
+This is correct. Since for the echo, we correctly identify all variable inside the string.
+
+3.3.3 Export variable
+(testcase 51)
+instruction:
+set v 551
+set w 651
+set x 751
+env
+
+output:
+Some environment variable but no "v" or "w" or "x" in it.
+
+explanation:
+This is correct. Since we have not export them.
+
+(testcase 52)
+instruction:
+export v
+env
+
+output:
+Variable exported
+
+Some environment variable, and:
+v=551
+Program was successful
+
+explanation:
+This is correct. Since we exported v and it shows up in environment variables.
+
+(testcase 53)
+instruction:
+export w
+export x
+env
+
+output:
+Variable exported
+Variable exported
+
+Some environment variable, and all three variables are here:
+v=551
+w=651
+x=751
+Program was successful
+
+explanation:
+This is correct. We export all of them.
+
+
+3.3.4 Reverse variable value
+(testcase 54)
+instruction:
+set v 551
+rev v
+echo $v
+
+output:
+155
+Program was successful
+
+explanation:
+This is correct. We reverse the value and print "551" as "155"
+
+(testcase 55)
+instruction:
+set v hello
+rev v
+echo $v
+
+output:
+olleh
+Program was successful
+
+explanation:
+This is correct. We reverse the value and print "hello" as "olleh".
+
+(testcase 56)
+instruction:
+set v ECE551_is_awesome
+rev v
+export v
+env
+
+output:
+Variable exported
+
+Other environment variables, and:
+v=emosewa_si_155ECE
+Program was successful
+
+explanation:
+This is correct. We checked the underscore in variable value, and we can export reversed variable value.
+
+3.3.5 Handle special variable name (valid or invalid)
+(testcase 57)
+instruction:
+set -a 551
+
+output:
+variable name not valid
+
+explanation:
+This is correct. Since the variable name is invalid.
+
+(testcase 58)
+instruction:
+export 
+
+output:
+Need one arguement
+input not valid
+
+explanation:
+This is correct. Since no varible are provided for export.
+
+(testcase 59)
+instruction:
+rev 
+
+output:
+Need one arguement
+input not valid
+
+explanation:
+This is correct. Since no varible are provided for rev.
+
+(testcase 60)
+instruction:
+set a 551
+echo $a---
+
+output:
+551---
+Program was successful
+
+explanation:
+This is correct. We first print value for variable "$a", then print the "---".
+
+(testcase 61)
+instruction:
+set a.1 551
+
+output:
+variable name not valid
+
+explanation:
+This is correct. Since the variable name is invalid.
+
+(testcase 62)
+instruction:
+set ++a 551
+
+output:
+variable name not valid
+
+explanation:
+This is correct. Since the variable name is invalid. 
